@@ -35,7 +35,7 @@ MBRdata_FR.na <- MBRdata_FR[complete.cases(MBRdata_FR),] #remove NA values
 #plots
 MBRdata_FR.na$Stage <- ordered(MBRdata_FR.na$Stage, levels=c("1", "2", "3", "4", "5", "6"))
 
-Fig_FRstage <- ggplot(MBRdata_FR.n, aes(x = Stage, y = FoulingRate, fill=Stage)) +
+Fig_FRstage <- ggplot(MBRdata_FR.na, aes(x = Stage, y = FoulingRate, fill=Stage)) +
   geom_hline(yintercept=0, linetype = "dashed", linewidth = 0.5, colour="grey60")+
   scale_fill_viridis_d() +
   geom_boxplot(width = 0.8) +
@@ -52,12 +52,12 @@ Fig_FRstage <- ggplot(MBRdata_FR.n, aes(x = Stage, y = FoulingRate, fill=Stage))
 Fig_FRstage
 ggsave("Output/Figures/Fig_FRstage.jpeg", width = 20, height = 15, units = "cm")
 
-MBRdata_FR.na$HRT <- ordered(MBRdata_FR.na$HRT, levels=c("1", "2.25", "1.5", "2", "3"))
+MBRdata_FR.na$HRT <- ordered(MBRdata_FR.na$HRT, levels=c("1", "1.25", "1.5", "2", "3"))
 
 Fig_FR_HRT <- ggplot(MBRdata_FR.na, aes(x = HRT, y = FoulingRate, fill=HRT)) +
   geom_hline(yintercept=0, linetype = "dashed", linewidth = 0.5, colour="grey60")+
   scale_fill_manual(values =
-                      c("olivedrab3","yellow3","orange3","orangered3","red"))+
+                      c("olivedrab2","yellow","yellow3","orange","red"))+
   geom_boxplot(width = 0.8) +
   ylab("Fouling Rate (mbar/h)")+
   ylim(-20,20)+ #like this I cut outliers!
