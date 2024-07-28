@@ -3,6 +3,8 @@ install.packages('ggplot2') #nice plots
 install.packages('tidyverse') #reshaping data i.e., pivol longer, remove NAs..
 install.packages('dplyr') #manipulate datasets in general: if you get a phyton error go to Tools > global options > Phython > untick 'automatically...' > ok
 install.packages('rstatix') #function add_significance() function
+install.packages('lubridate') #timeseries
+install.packages('zoo') #useful for irregular timeseries
 #it may be useful to save output of statistical tests = package 'tidystats' --> for my PhD papers I did it manually
 #it may be useful to add p-values significance to ggplot graphs = package 'ggsignif' --> for my PhD papers I did it manually
 
@@ -11,6 +13,8 @@ library(ggplot2)
 library (tidyverse)
 library(dplyr)
 library(rstatix)
+library(lubridate)
+library(zoo)
 
 #set working directory to input files: it may change depending on your local folder!
 setwd("C:/Rprojects/BETAseminars")
@@ -22,23 +26,37 @@ names(MBRdata) #check if it has been imported correctly
 str(MBRdata) #check if it has been imported correctly
 view(MBRdata) #open imported dataset
 summary(MBRdata) #basic statistical data such as mean
-
-#convert stage and HRT int to factor
-MBRdata$Stage <- as.factor(MBRdata$Stage)
-MBRdata$HRT <- as.factor(MBRdata$HRT)
-
+#important to know how to work with timeseries = convert Date default 'factor' variable to a real 'date' variable
+MBRdata$Date <- as.Date(MBRdata$Date,"%d/%m/%Y")
 #create a separate dataset to plot Fouling Rate: remove NAs from Fouling Rate column
 MBRdata_FR <- MBRdata  %>% 
-  select(Stage, HRT, FoulingRate)
+  select(Date, Stage, HRT, FoulingRate)
 MBRdata_FR.na <- MBRdata_FR[complete.cases(MBRdata_FR),] #remove NA values
 
-#ANOVAS for boxplots presented: consider to group data by weeks!
+#consider to work with weekly means
+#1st step: group current data by operational day = date
+MBRdata_FR.na_daily <- aggregate(MBRdata_FR.na[, 2:4], list(MBRdata_FR.na$Date), mean)
+colnames(MBRdata_FR.na_daily)[1] <- "Date"
+#2nd step: add missing dates
+ts <- seq(ymd("2023-05-29"), ymd("2023-09-28"), by="day")
+ts_df <- data.frame(Date=ts)
+MBRdata_FRdaily <- full_join(ts_df,MBRdata_FR.na_daily) #by date
+#3rd step: calculate weekly averages --> problem = during some weeks you have different treatments....
+#how did you solve this?
+weekly_means <- MBRdata_FRdaily %>%
+  mutate(Week = floor_date(Date, unit = "week")) %>%  #to create a new column representing the week of each date
+  group_by(Week) %>%
+  summarize(WeeklyMean_Stage = mean(Stage, na.rm = TRUE),
+            WeeklyMean_HRT = mean(HRT, na.rm = TRUE),
+            WeeklyMean_FR = mean(FoulingRate, na.rm = TRUE),
+            .groups = 'drop'
+  )
+
+#t-tests for sub-daily dataset
 MBRdata_FR.na_Stage <- MBRdata_FR.na %>% 
-  select(-HRT)
-
+  select(Stage, FoulingRate)
 MBRdata_FR.na_HRT <- MBRdata_FR.na %>% 
-  select(-Stage)
-
+  select(HRT, FoulingRate)
 #step useful when we have more than 1 variable
 MBRdata_Stage.long <- MBRdata_FR.na_Stage %>%
   pivot_longer(-Stage, names_to = "variables", values_to = "value")
@@ -64,13 +82,19 @@ stat.test <- MBRdata_HRT.long %>%
   add_significance()
 stat.test #not significantly among sub-daily HRT
 
-#try with weekly means (= every 7 Operational Days) with rollmean() function - careful if NA values, use 'rollapply' instead
-#Group and calculate rolling means
+#t-tests for weekly dataset
+#weekly_means good for plotting but not good for t-test as it has some NAs
+#and treatments are not the same...
 
 
 
 
-#plots
+#BOXPLOTS
+#SUB-DAILY
+#convert stage and HRT int to factor
+MBRdata$Stage <- as.factor(MBRdata$Stage)
+MBRdata$HRT <- as.factor(MBRdata$HRT)
+
 MBRdata_FR.na$Stage <- ordered(MBRdata_FR.na$Stage, levels=c("1", "2", "3", "4", "5", "6"))
 
 Fig_FRstage <- ggplot(MBRdata_FR.na, aes(x = Stage, y = FoulingRate, fill=Stage)) +
@@ -109,3 +133,11 @@ Fig_FR_HRT <- ggplot(MBRdata_FR.na, aes(x = HRT, y = FoulingRate, fill=HRT)) +
 
 Fig_FR_HRT
 ggsave("Output/Figures/Fig_FR_HRT.jpeg", width = 20, height = 15, units = "cm")
+
+#WEEKLY
+#solve first the fact that "treatments" change if we calculate weekly means....
+
+
+
+
+

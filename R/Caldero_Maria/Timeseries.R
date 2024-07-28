@@ -3,18 +3,41 @@ install.packages('ggplot2') #nice plots
 install.packages('cowplot') #align multiple ggplots
 install.packages('tidyverse') #reshaping data i.e., pivol longer, remove NAs..
 install.packages('dplyr') #manipulate datasets in general: if you get a phyton error go to Tools > global options > Phython > untick 'automatically...' > ok
+install.packages('mgcv') #for GAM/MS
+install.packages ('gratia') #for GAM/MS
 
 #load packages: every time we want to run the script
 library(ggplot2)
 library (tidyverse)
 library(dplyr)
 library(cowplot)
+library(mgcv)
+library(gratia)
 
 #set working directory to input files: it may change depending on your local folder!
 setwd("C:/Rprojects/BETAseminars")
 
 #load input file
 MBRdata <- read.csv("Input/MBR_data.csv", stringsAsFactors = T) #make sure our PCs are configured to same csv files separated by ',' instead of ';'
+str(MBRdata)
+
+#GAM/M model trials
+#GOOD SOURCE: https://fromthebottomoftheheap.net/2014/05/15/identifying-periods-of-change-with-gams/
+
+#Model A with TMPmax
+TMPmax.A <- gam(TMPmax ~ s(OT, fx = FALSE, k = 6, bs="cr"),
+            family = gaussian,
+            data = MBRdata, method = "REML")
+#check assumptions:
+appraise(TMPmax.A) #normality and heterogeneity not good
+#independence of observations --> ACF plot
+resTMPmax.A <- residuals(TMPmax.A)
+I1<-!is.na(MBRdata$TMPmax)
+Efull<-vector(length = length(MBRdata$TMPmax))
+Efull<-NA
+Efull[I1]<-resTMPmax.A
+resTMPmax.A<-Efull
+ACF_TMPmax.A<-acf(resTMPmax.A, main = "ACF", na.action=na.pass, lag.max=10) #temporal correlation
 
 
 
