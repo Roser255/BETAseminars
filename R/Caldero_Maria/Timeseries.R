@@ -40,7 +40,6 @@ resTMPmax.A<-Efull
 ACF_TMPmax.A<-acf(resTMPmax.A, main = "ACF", na.action=na.pass, lag.max=10) #temporal correlation
 
 
-
 #Timeseries plot: ggplot does not allow to plot 2 timeseries variables with different y axis as the creator thinks it is not a good practice. 
 #Instead, we can plot them well aligned (see below for TMPmax and Operational Flux variables)
 
