@@ -20,23 +20,26 @@ library(zoo)
 setwd("C:/Rscripts/BETAseminars/R/Iborra_Roser")
 
 #load input file
-MBRdata <- read.csv("Input/MBR_data.csv", stringsAsFactors = T) #make sure our PCs are configured to same csv files separated by ',' instead of ';'
+MBRdata <- read.csv("C:/Rscripts/BETAseminars/Input/MBR_data.csv", stringsAsFactors = T) #make sure our PCs are configured to same csv files separated by ',' instead of ';'
 ?read.csv #when you want to know more about the function used --> the HELP window opens below.
 names(MBRdata) #check if it has been imported correctly
 str(MBRdata) #check if it has been imported correctly
 View(MBRdata) #open imported dataset
-summary(MBRdata) #basic statistical data such as mean
+summary(MBRdata) #basic statistical data such as mean #Et fa un resum de les dades (min,max,mean,q1...)
 #important to know how to work with timeseries = convert Date default 'factor' variable to a real 'date' variable
-MBRdata$Date <- as.Date(MBRdata$Date,"%d/%m/%Y")
+MBRdata$Date <- as.Date(MBRdata$Date,"%d/%m/%Y")#canvi de format de la data
 #create a separate dataset to plot Fouling Rate: remove NAs from Fouling Rate column
 MBRdata_FR <- MBRdata  %>% 
-  select(Date, Stage, HRT, FoulingRate)
-MBRdata_FR.na <- MBRdata_FR[complete.cases(MBRdata_FR),] #remove NA values
+  select(Date, Stage, HRT, FoulingRate) #Selecció de columnes que m'interessen
+MBRdata_FR.na <- MBRdata_FR[complete.cases(MBRdata_FR),] #remove NA values #eliminats els valors nuls (NA) 
+sum(is.na(MBRdata_FR.na)) #comprovació que no hi ha NA
 
 #consider to work with weekly means
 #1st step: group current data by operational day = date
 MBRdata_FR.na_daily <- aggregate(MBRdata_FR.na[, 2:4], list(MBRdata_FR.na$Date), mean)
-colnames(MBRdata_FR.na_daily)[1] <- "Date"
+colnames(MBRdata_FR.na_daily)[1] <- "Date" #1.Selecciona les columnes sobre les que 
+#vol fer la mitjana #2Indica que los datos deben agruparse por la columna date # 3 Especifica que se debe
+#calcular el promedio de las columnas seleccionadas para cada grupo (fecha)
 #2nd step: add missing dates
 ts <- seq(ymd("2023-05-29"), ymd("2023-09-28"), by="day")
 ts_df <- data.frame(Date=ts)
